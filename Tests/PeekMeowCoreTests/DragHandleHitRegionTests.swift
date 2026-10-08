@@ -9,25 +9,18 @@ enum DragHandleHitRegionTests {
 
     static func rightHandleOnOuterEdge() throws {
         let bounds = CGRect(x: 0, y: 0, width: 280, height: 320)
-        let rect = DragHandleGeometry.rect(
-            in: bounds,
-            edge: .right,
-            handleOffsetInsidePanel: 160,
-            stackLength: 56
-        )
+        let rect = DragHandleGeometry.rect(in: bounds, edge: .right)
         try expectEqual(rect.maxX, bounds.maxX)
+        try expectEqual(rect.minY, bounds.minY)
         try expectEqual(rect.width, LayoutMetrics.hoverHitThickness)
-        try expect(rect.height == 56)
+        try expectEqual(rect.height, bounds.height)
     }
 
     static func topHandleSitsAtTop() throws {
         let bounds = CGRect(x: 0, y: 0, width: 280, height: 320)
-        let rect = DragHandleGeometry.rect(
-            in: bounds,
-            edge: .top,
-            handleOffsetInsidePanel: 140,
-            stackLength: 56
-        )
+        let rect = DragHandleGeometry.rect(in: bounds, edge: .top)
         try expectEqual(rect.maxY, bounds.height)
+        try expectEqual(rect.width, bounds.width)
+        try expectEqual(rect.height, LayoutMetrics.hoverHitThickness)
     }
 }

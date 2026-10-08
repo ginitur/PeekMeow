@@ -41,8 +41,19 @@ public enum ScreenMigration: Sendable {
 
     public static func screenContaining(
         point: CGPoint,
-        screens: [ScreenGeometry]
+        screens: [ScreenGeometry],
+        preferring preferredID: String? = nil
     ) -> ScreenGeometry? {
+        // A point on the shared pixel belongs to the next display. Keep the panel's
+        // display until the pointer is clearly past the seam.
+        if let preferredID,
+           let preferred = screens.first(where: { $0.identifier == preferredID }) {
+            let slop = LayoutMetrics.sharedEdgeClearance
+            let expanded = preferred.frame.insetBy(dx: -slop, dy: -slop)
+            if expanded.contains(point) {
+                return preferred
+            }
+        }
         if let hit = screens.first(where: { $0.frame.contains(point) }) {
             return hit
         }

@@ -52,12 +52,7 @@ enum AnchorStableDuringResizeTests {
             let content = PanelResizeGeometry.contentRect(in: window, edge: edge)
             let grip = PanelResizeGeometry.gripFrame(in: content, edge: edge)
             try expect(content.contains(grip))
-            let handle = DragHandleGeometry.rect(
-                in: window,
-                edge: edge,
-                handleOffsetInsidePanel: window.height / 2,
-                stackLength: 56
-            )
+            let handle = DragHandleGeometry.rect(in: window, edge: edge)
             try expect(grip.intersection(handle).isNull, "\(edge) grip overlaps the drag handle")
         }
         try expectEqual(PanelResizeGeometry.corner(for: .right), .bottomLeft)

@@ -15,6 +15,9 @@ public enum LayoutMetrics: Sendable {
     /// Mouse-tracking thickness of the collapsed window, in points.
     public static let hoverHitThickness: CGFloat = 14
 
+    /// Pull the window off an edge that touches another display, so the drag rail can be clicked.
+    public static let sharedEdgeClearance: CGFloat = 28
+
     /// Extra padding around the union of tab + panel so a 1–2 px animation gap does not collapse hover.
     public static let hoverRegionPadding: CGFloat = 6
 
@@ -52,6 +55,9 @@ public enum LayoutMetrics: Sendable {
 
     /// Category control hit height. Kept clear of the drag rail.
     public static let categoryHitHeight: CGFloat = 32
+
+    /// In-panel buttons. The glyph stays small; the clickable square is larger.
+    public static let controlHit: CGFloat = 32
     public static let defaultOpacity: Double = 0.92
     public static let minimumOpacity: Double = 0.5
     public static let maximumOpacity: Double = 1.0

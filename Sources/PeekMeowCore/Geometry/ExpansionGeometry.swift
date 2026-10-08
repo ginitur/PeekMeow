@@ -7,17 +7,19 @@ public enum ExpansionGeometry: Sendable {
         anchor: EdgeAnchor,
         screen: ScreenGeometry,
         panelSize: CGSize,
-        stackLength: CGFloat
+        stackLength: CGFloat,
+        inset: CGFloat = 0
     ) -> ExpansionLayout {
         let collapsed = EdgeGeometry.collapsedPlacement(
             screen: screen,
             edge: anchor.edge,
             offset: anchor.offset,
-            stackLength: stackLength
+            stackLength: stackLength,
+            inset: inset
         )
-        let point = anchorPoint(anchor: anchor, screen: screen)
+        let point = anchorPoint(anchor: anchor, screen: screen, inset: inset)
         let visible = screen.visibleFrame
-        let outer = EdgeGeometry.outerCoordinate(edge: anchor.edge, screen: screen)
+        let outer = EdgeGeometry.outerCoordinate(edge: anchor.edge, screen: screen, inset: inset)
 
         var panel: CGRect
         var attachment: CGPoint
@@ -66,9 +68,9 @@ public enum ExpansionGeometry: Sendable {
         )
     }
 
-    public static func anchorPoint(anchor: EdgeAnchor, screen: ScreenGeometry) -> CGPoint {
+    public static func anchorPoint(anchor: EdgeAnchor, screen: ScreenGeometry, inset: CGFloat = 0) -> CGPoint {
         let visible = screen.visibleFrame
-        let outer = EdgeGeometry.outerCoordinate(edge: anchor.edge, screen: screen)
+        let outer = EdgeGeometry.outerCoordinate(edge: anchor.edge, screen: screen, inset: inset)
         switch anchor.edge {
         case .left, .right:
             return CGPoint(x: outer, y: visible.maxY - anchor.offset)

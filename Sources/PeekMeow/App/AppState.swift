@@ -18,6 +18,8 @@ final class AppState {
     var draftText: String = ""
     var isComposing: Bool = false
     var expandedTaskIDs: Set<UUID> = []
+    /// Last measured panel content size. A zero reading is ignored so the quote and mark keep a real size.
+    var panelWidth: CGFloat = PanelSizeMetrics.defaultWidth
     var panelHeight: CGFloat = PanelSizeMetrics.defaultHeight
 
     private let store: MemoStore?

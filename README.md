@@ -29,12 +29,12 @@ Supported edges are Left, Right, and Bottom. Top is not a snap target.
 
 ## Download
 
-Release candidates are published on [GitHub Releases](https://github.com/ginitur/PeekMeow/releases). `v0.1.0-rc.3` is the newest published pre-release. It is not a stable `v0.1.0`. `v0.1.0-rc.1` and `v0.1.0-rc.2` stay on the releases page. `v0.1.0-rc.2` did not pass device acceptance.
+Release candidates are published on [GitHub Releases](https://github.com/ginitur/PeekMeow/releases). `v0.1.0-rc.4` is the newest published pre-release. It is not a stable `v0.1.0`. `v0.1.0-rc.1`, `v0.1.0-rc.2`, and `v0.1.0-rc.3` stay on the releases page. `v0.1.0-rc.2` did not pass device acceptance.
 
 | Platform | Asset | Run |
 | --- | --- | --- |
-| macOS 14+ on Apple silicon | `PeekMeow-macOS-0.1.0-rc.3.zip` | Unzip and open `PeekMeow.app` |
-| Windows x64 | `PeekMeow-Windows-x64-0.1.0-rc.3.zip` | Unzip and double-click `PeekMeow.exe` |
+| macOS 14+ on Apple silicon | `PeekMeow-macOS-0.1.0-rc.4.zip` | Unzip and open `PeekMeow.app` |
+| Windows x64 | `PeekMeow-Windows-x64-0.1.0-rc.4.zip` | Unzip and double-click `PeekMeow.exe` |
 
 Check `SHA256SUMS.txt` on the release against the downloaded zip.
 

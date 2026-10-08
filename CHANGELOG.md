@@ -2,7 +2,14 @@
 
 All notable changes to PeekMeow are recorded here.
 
-Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). `0.1.0-rc.3` is the published pre-release. `0.1.0-rc.2` failed device acceptance and stays published. This is not a stable `0.1.0`.
+Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). `0.1.0-rc.4` is the published pre-release. Earlier candidates stay published. `0.1.0-rc.2` failed device acceptance. This is not a stable `0.1.0`.
+
+## [0.1.0-rc.4] — 2026-10-08
+
+### Changed
+
+- The macOS corner mark is the supplied calligraphy: a dark 23, a gold slash, and a gold star. It sits in the lower-right. Tasks, Add Task, and the quotation stay outside that rectangle.
+- Dragging onto an edge shared with another display keeps 28 pt of clearance, so the rail can still be grabbed.
 
 ## [0.1.0-rc.3] — 2026-10-02
 

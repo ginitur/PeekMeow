@@ -3,8 +3,8 @@ import Foundation
 /// Version shown in Settings and `--version`. A packaged app reads Info.plist.
 /// `swift run` has no app plist, so it uses the source fallback.
 enum AppIdentity {
-    static let fallbackVersion = "0.1.0-rc.3"
-    static let fallbackBuild = "3"
+    static let fallbackVersion = "0.1.0-rc.4"
+    static let fallbackBuild = "4"
 
     static var version: String { packaged("CFBundleShortVersionString") ?? fallbackVersion }
     static var build: String { packaged("CFBundleVersion") ?? fallbackBuild }

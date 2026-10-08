@@ -30,6 +30,7 @@ jobs:
           app="dist/PeekMeow.app"
           test -f "$app/Contents/Resources/AppIcon.icns"
           test -f "$app/Contents/Resources/PeekMeowMark.png"
+          test -f "$app/Contents/Resources/PeekMeowAtmosphere.png"
           sips -g pixelWidth -g pixelHeight "$app/Contents/Resources/PeekMeowMark.png"
           version="$(tr -d '[:space:]' < VERSION)"
           tag="${GITHUB_REF_NAME#v}"
@@ -187,7 +188,7 @@ jobs:
           - Appearance preferences
           - Cat app icon
           - All Tasks filter and locale date header
-          - Faint gold mark in the panel corner
+          - Calligraphic 23 in the lower-right corner, with text kept outside it
 
           ### Windows
 

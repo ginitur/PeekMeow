@@ -35,19 +35,32 @@ public enum EdgeGeometry: Sendable {
 
     /// Outer coordinate of an edge, in screen space.
     /// Uses `visibleFrame` when the Dock insets that edge so the tab stays hittable.
-    public static func outerCoordinate(edge: ScreenEdge, screen: ScreenGeometry) -> CGFloat {
+    /// `inset` pulls a shared display seam inward so the drag rail stays on this screen.
+    public static func outerCoordinate(
+        edge: ScreenEdge,
+        screen: ScreenGeometry,
+        inset: CGFloat = 0
+    ) -> CGFloat {
         let frame = screen.frame
         let visible = screen.visibleFrame
+        let base: CGFloat
         switch edge {
         case .left:
-            return visible.minX - frame.minX > 1 ? visible.minX : frame.minX
+            base = visible.minX - frame.minX > 1 ? visible.minX : frame.minX
         case .right:
-            return frame.maxX - visible.maxX > 1 ? visible.maxX : frame.maxX
+            base = frame.maxX - visible.maxX > 1 ? visible.maxX : frame.maxX
         case .bottom:
-            return visible.minY - frame.minY > 1 ? visible.minY : frame.minY
+            base = visible.minY - frame.minY > 1 ? visible.minY : frame.minY
         case .top:
             // Menu bar always insets the top. Normal Top mode sits under it.
-            return visible.maxY
+            base = visible.maxY
+        }
+        let pull = max(inset, 0)
+        switch edge {
+        case .left, .bottom:
+            return base + pull
+        case .right, .top:
+            return base - pull
         }
     }
 
@@ -55,7 +68,8 @@ public enum EdgeGeometry: Sendable {
         screen: ScreenGeometry,
         edge: ScreenEdge,
         offset: CGFloat,
-        stackLength: CGFloat
+        stackLength: CGFloat,
+        inset: CGFloat = 0
     ) -> PanelPlacement {
         let clamped = clampOffset(offset, edge: edge, screen: screen, stackLength: stackLength)
         let size = collapsedWindowSize(edge: edge, stackLength: stackLength)
@@ -63,7 +77,8 @@ public enum EdgeGeometry: Sendable {
             screen: screen,
             edge: edge,
             offset: clamped,
-            size: size
+            size: size,
+            inset: inset
         )
         return PanelPlacement(
             displayIdentifier: screen.identifier,
@@ -77,14 +92,16 @@ public enum EdgeGeometry: Sendable {
     public static func placement(
         from stored: DisplayPlacement,
         screen: ScreenGeometry,
-        stackLength: CGFloat
+        stackLength: CGFloat,
+        screens: [ScreenGeometry] = []
     ) -> PanelPlacement {
         let edge: ScreenEdge = PlacementPolicy.isSupported(stored.edge) ? stored.edge : .right
         return collapsedPlacement(
             screen: screen,
             edge: edge,
             offset: stored.offset,
-            stackLength: stackLength
+            stackLength: stackLength,
+            inset: ScreenAdjacency.clearance(edge: edge, screen: screen, screens: screens)
         )
     }
 
@@ -95,9 +112,11 @@ public enum EdgeGeometry: Sendable {
         screen: ScreenGeometry,
         stackLength: CGFloat,
         grabSize: CGSize,
-        magnetRange: CGFloat = LayoutMetrics.magnetRange
+        magnetRange: CGFloat = LayoutMetrics.magnetRange,
+        screens: [ScreenGeometry] = []
     ) -> PanelPlacement {
         let (edge, distance) = nearestSnappableEdge(to: pointer, on: screen)
+        let inset = ScreenAdjacency.clearance(edge: edge, screen: screen, screens: screens)
         // Live drag is always a visible tab. Cloak only commits on mouse-up.
         if distance <= magnetRange {
             let offset = offsetAlongEdge(pointer: pointer, edge: edge, stackLength: stackLength, screen: screen)
@@ -105,7 +124,8 @@ public enum EdgeGeometry: Sendable {
                 screen: screen,
                 edge: edge,
                 offset: offset,
-                stackLength: stackLength
+                stackLength: stackLength,
+                inset: inset
             )
         }
 
@@ -129,7 +149,8 @@ public enum EdgeGeometry: Sendable {
     public static func committedPlacement(
         pointer: CGPoint,
         screen: ScreenGeometry,
-        stackLength: CGFloat
+        stackLength: CGFloat,
+        screens: [ScreenGeometry] = []
     ) -> PanelPlacement {
         let (edge, _) = nearestSnappableEdge(to: pointer, on: screen)
         let offset = offsetAlongEdge(pointer: pointer, edge: edge, stackLength: stackLength, screen: screen)
@@ -137,7 +158,8 @@ public enum EdgeGeometry: Sendable {
             screen: screen,
             edge: edge,
             offset: offset,
-            stackLength: stackLength
+            stackLength: stackLength,
+            inset: ScreenAdjacency.clearance(edge: edge, screen: screen, screens: screens)
         )
     }
 
@@ -200,10 +222,11 @@ public enum EdgeGeometry: Sendable {
         screen: ScreenGeometry,
         edge: ScreenEdge,
         offset: CGFloat,
-        size: CGSize
+        size: CGSize,
+        inset: CGFloat
     ) -> CGRect {
         let visible = screen.visibleFrame
-        let outer = outerCoordinate(edge: edge, screen: screen)
+        let outer = outerCoordinate(edge: edge, screen: screen, inset: inset)
         switch edge {
         case .right:
             let anchorY = visible.maxY - offset

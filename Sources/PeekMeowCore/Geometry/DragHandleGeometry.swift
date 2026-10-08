@@ -2,45 +2,22 @@ import CoreGraphics
 import Foundation
 
 public enum DragHandleGeometry: Sendable {
+    /// The whole outer rail, not only the short capsule. Thickness stays the hover rail.
     /// AppKit view coordinates, origin bottom-left.
     public static func rect(
         in bounds: CGRect,
         edge: ScreenEdge,
-        handleOffsetInsidePanel: CGFloat,
-        stackLength: CGFloat,
         thickness: CGFloat = LayoutMetrics.hoverHitThickness
     ) -> CGRect {
-        let length = stackLength
-        let offset = handleOffsetInsidePanel
         switch edge {
         case .right:
-            return CGRect(
-                x: bounds.width - thickness,
-                y: bounds.height - offset - length / 2,
-                width: thickness,
-                height: length
-            )
+            return CGRect(x: bounds.width - thickness, y: bounds.minY, width: thickness, height: bounds.height)
         case .left:
-            return CGRect(
-                x: 0,
-                y: bounds.height - offset - length / 2,
-                width: thickness,
-                height: length
-            )
+            return CGRect(x: bounds.minX, y: bounds.minY, width: thickness, height: bounds.height)
         case .top:
-            return CGRect(
-                x: offset - length / 2,
-                y: bounds.height - thickness,
-                width: length,
-                height: thickness
-            )
+            return CGRect(x: bounds.minX, y: bounds.height - thickness, width: bounds.width, height: thickness)
         case .bottom:
-            return CGRect(
-                x: offset - length / 2,
-                y: 0,
-                width: length,
-                height: thickness
-            )
+            return CGRect(x: bounds.minX, y: bounds.minY, width: bounds.width, height: thickness)
         }
     }
 }

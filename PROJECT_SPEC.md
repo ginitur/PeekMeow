@@ -10,7 +10,7 @@ Core model: **Date, Category, Note, Task, Subtask, Completion.**
 
 Nothing else is part of v0.1: no priority, tags, projects, reminders, recurrence, notifications, calendar sync, kanban, statistics, charts, Markdown, attachments, iCloud, or accounts.
 
-Version: `0.1.0-rc.3` (published pre-release `v0.1.0-rc.3` at `820998a`; not stable `v0.1.0`)  
+Version: `0.1.0-rc.4` (published pre-release `v0.1.0-rc.4`; not stable `v0.1.0`)  
 Bundle identifier: `com.peekmeow.app`  
 Deployment target: macOS 14+
 

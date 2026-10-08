@@ -95,14 +95,7 @@ final class PanelController {
                 edge: AppSettings.default.selectedEdge,
                 offset: AppSettings.default.edgeOffset
             )
-        setAnchor(
-            EdgeGeometry.placement(
-                from: stored,
-                screen: screen,
-                stackLength: positionManager.stackLength
-            ),
-            persist: false
-        )
+        setAnchor(restoredPlacement(stored, on: screen), persist: false)
         panel.orderFrontRegardless()
     }
 
@@ -125,14 +118,7 @@ final class PanelController {
             offset: AppSettings.default.edgeOffset
         )
         PlacementStore.upsert(stored)
-        setAnchor(
-            EdgeGeometry.placement(
-                from: stored,
-                screen: screen,
-                stackLength: positionManager.stackLength
-            ),
-            persist: false
-        )
+        setAnchor(restoredPlacement(stored, on: screen), persist: false)
         panel.orderFrontRegardless()
     }
 
@@ -148,11 +134,7 @@ final class PanelController {
         NSApp.appearance = appearance
         panel.appearance = appearance
         if let anchor = anchorPlacement, let screen = screenForAnchor(anchor) {
-            anchorPlacement = EdgeGeometry.placement(
-                from: anchor.stored,
-                screen: screen,
-                stackLength: positionManager.stackLength
-            )
+            anchorPlacement = restoredPlacement(anchor.stored, on: screen)
         }
         guard anchorPlacement != nil else { return }
         syncChrome(animated: false)
@@ -180,14 +162,7 @@ final class PanelController {
             hide()
             return
         }
-        setAnchor(
-            EdgeGeometry.placement(
-                from: resolved.placement,
-                screen: screen,
-                stackLength: positionManager.stackLength
-            ),
-            persist: true
-        )
+        setAnchor(restoredPlacement(resolved.placement, on: screen), persist: true)
     }
 
     private func handleDrag(at point: CGPoint) {
@@ -198,7 +173,8 @@ final class PanelController {
             pointer: point,
             screen: screen,
             stackLength: positionManager.stackLength,
-            grabSize: grab
+            grabSize: grab,
+            screens: ScreenManager.allSnapshots()
         )
         setAnchor(placement, persist: false, animated: false)
     }
@@ -211,7 +187,8 @@ final class PanelController {
         let placement = EdgeGeometry.committedPlacement(
             pointer: point,
             screen: screen,
-            stackLength: positionManager.stackLength
+            stackLength: positionManager.stackLength,
+            screens: ScreenManager.allSnapshots()
         )
         setAnchor(placement, persist: true, animated: false)
         hover.endDrag()
@@ -387,7 +364,12 @@ final class PanelController {
             anchor: EdgeAnchor.from(anchor.stored),
             screen: screen,
             panelSize: previewSize,
-            stackLength: positionManager.stackLength
+            stackLength: positionManager.stackLength,
+            inset: ScreenAdjacency.clearance(
+                edge: anchor.edge,
+                screen: screen,
+                screens: ScreenManager.allSnapshots()
+            )
         )
         currentExpansion = layout
         var expanded = anchor
@@ -511,12 +493,7 @@ final class PanelController {
 
     private func dragHandleRect(in bounds: CGRect, edge: ScreenEdge, expanded: Bool) -> CGRect? {
         guard expanded else { return nil }
-        return DragHandleGeometry.rect(
-            in: bounds,
-            edge: edge,
-            handleOffsetInsidePanel: currentExpansion?.handleOffsetInsidePanel ?? bounds.height / 2,
-            stackLength: positionManager.stackLength
-        )
+        return DragHandleGeometry.rect(in: bounds, edge: edge)
     }
 
     private func pointerHits(at point: CGPoint) -> HoverPointerHits {
@@ -581,9 +558,21 @@ final class PanelController {
             ?? ScreenManager.mainSnapshot()
     }
 
+    private func restoredPlacement(_ stored: DisplayPlacement, on screen: ScreenGeometry) -> PanelPlacement {
+        EdgeGeometry.placement(
+            from: stored,
+            screen: screen,
+            stackLength: positionManager.stackLength,
+            screens: ScreenManager.allSnapshots()
+        )
+    }
+
     private func screen(for point: CGPoint) -> ScreenGeometry? {
-        ScreenMigration.screenContaining(point: point, screens: ScreenManager.allSnapshots())
-            ?? ScreenManager.mainSnapshot()
+        ScreenMigration.screenContaining(
+            point: point,
+            screens: ScreenManager.allSnapshots(),
+            preferring: anchorPlacement?.displayIdentifier
+        ) ?? ScreenManager.mainSnapshot()
     }
 
     private func enterKeyMode() {

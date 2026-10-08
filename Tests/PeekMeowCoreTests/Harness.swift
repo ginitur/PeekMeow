@@ -31,6 +31,7 @@ enum PeekMeowCoreTestsMain {
         let suites: [(String, () throws -> Void)] = [
             ("EdgeGeometry", EdgeGeometryTests.run),
             ("ScreenMigration", ScreenMigrationTests.run),
+            ("ScreenAdjacency", ScreenAdjacencyTests.run),
             ("HoverEngine", HoverEngineTests.run),
             ("HoverRegion", HoverRegionTests.run),
             ("PanelAnimator", PanelAnimatorTests.run),

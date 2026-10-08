@@ -65,5 +65,17 @@ enum ScreenMigrationTests {
             screens: [left, right]
         )
         try expect(hit?.identifier == "right")
+        let seam = ScreenMigration.screenContaining(
+            point: CGPoint(x: 1000, y: 400),
+            screens: [left, right],
+            preferring: "left"
+        )
+        try expect(seam?.identifier == "left")
+        let crossed = ScreenMigration.screenContaining(
+            point: CGPoint(x: 1000 + LayoutMetrics.sharedEdgeClearance + 8, y: 400),
+            screens: [left, right],
+            preferring: "left"
+        )
+        try expect(crossed?.identifier == "right")
     }
 }

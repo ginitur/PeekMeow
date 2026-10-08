@@ -21,7 +21,10 @@ struct PreviewPanelView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     private var showsQuote: Bool {
-        BrandQuote.isVisible(panelHeight: state.panelHeight) && !state.isEditing
+        guard !state.isEditing else { return false }
+        // A zero reading is the view not having been measured yet, not a short panel.
+        if state.panelHeight <= 1 { return true }
+        return BrandQuote.isVisible(panelHeight: state.panelHeight)
     }
 
     private var gripCorner: ResizeGripCorner {
@@ -39,37 +42,30 @@ struct PreviewPanelView: View {
             ScrollView {
                 memoBody
                     .padding(.horizontal, 12)
-                    .padding(.bottom, gripCorner == .bottomLeft || gripCorner == .bottomRight ? gripClearance : 8)
+                    .padding(.bottom, 8)
+                    .background {
+                        ClearScrollPlate().allowsHitTesting(false)
+                    }
             }
+            .scrollContentBackground(.hidden)
             .textSelection(.disabled)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+            .layoutPriority(-1)
 
-            if state.isComposing, state.composingParentID == nil {
-                editorField(
-                    placeholder: state.composingType == .note ? "New note" : "New task",
-                    isSubtask: false
-                )
-                .padding(.leading, footerLeading)
-                .padding(.trailing, footerTrailing)
-                .padding(.bottom, 12)
-            } else if !state.isEditing {
-                addTaskBar
-            }
+            bottomRow
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background {
-            GeometryReader { proxy in
-                Color.clear.preference(key: PanelHeightKey.self, value: proxy.size.height)
+        .onGeometryChange(for: CGSize.self, of: { $0.size }) { size in
+            guard size.width > 1, size.height > 1 else { return }
+            if abs(state.panelWidth - size.width) > 0.5 {
+                state.panelWidth = size.width
             }
-        }
-        .onPreferenceChange(PanelHeightKey.self) { height in
-            state.panelHeight = height
+            if abs(state.panelHeight - size.height) > 0.5 {
+                state.panelHeight = size.height
+            }
         }
         .textSelection(.disabled)
         .preferredColorScheme(readableScheme)
-        .background {
-            atmosphereMark
-        }
         .background {
             PanelBackgroundView(appearance: appearance, image: backgroundImage)
         }
@@ -99,29 +95,63 @@ struct PreviewPanelView: View {
         return colorScheme == .light
     }
 
-    /// Behind the tasks. Hit testing stays off so drag, resize, and editing are unchanged.
-    private var atmosphereMark: some View {
-        GeometryReader { proxy in
-            let layout = AtmosphereMark.layout(
-                panelWidth: proxy.size.width,
-                panelHeight: proxy.size.height,
-                lightBackground: markIsLight
-            )
-            if let image = AtmosphereArtwork.image {
-                Image(nsImage: image)
-                .resizable()
-                .interpolation(.high)
-                .antialiased(true)
-                .aspectRatio(contentMode: .fit)
-                .frame(width: layout.width)
-                .opacity(layout.opacity)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                .offset(x: layout.bleed, y: layout.bleed)
-                .accessibilityHidden(true)
+    /// Corner size from the shared layout: about a quarter to a third of the panel.
+    private var markWidth: CGFloat {
+        AtmosphereMark.layout(
+            panelWidth: state.panelWidth,
+            panelHeight: state.panelHeight,
+            lightBackground: markIsLight
+        ).width
+    }
+
+    private var markTrailing: CGFloat {
+        gripCorner == .bottomRight ? gripClearance : 12
+    }
+
+    private var markBottom: CGFloat {
+        gripCorner == .bottomLeft || gripCorner == .bottomRight ? gripClearance : 12
+    }
+
+    /// Add Task stays full width. The quote sits beside the artwork, so the mark's rectangle has no words.
+    private var bottomRow: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            bottomComposer
+            HStack(alignment: .bottom, spacing: 10) {
+                if showsQuote {
+                    quoteBlock
+                        .frame(maxWidth: .infinity, alignment: .center)
+                } else {
+                    Spacer(minLength: 0)
+                }
+                cornerMark
             }
         }
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
+        .padding(.leading, footerLeading)
+        .padding(.trailing, markTrailing)
+        .padding(.bottom, markBottom)
+    }
+
+    @ViewBuilder
+    private var bottomComposer: some View {
+        if state.isComposing, state.composingParentID == nil {
+            editorField(
+                placeholder: state.composingType == .note ? "New note" : "New task",
+                isSubtask: false
+            )
+        } else if !state.isEditing {
+            addTaskButton
+        }
+    }
+
+    @ViewBuilder
+    private var cornerMark: some View {
+        if markWidth > 8, BrandAtmosphere.image != nil {
+            BrandMarkView(width: markWidth)
+                .fixedSize()
+                .layoutPriority(2)
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+        }
     }
 
     private var readableScheme: ColorScheme? {
@@ -164,10 +194,6 @@ struct PreviewPanelView: View {
         gripCorner == .bottomLeft ? gripClearance : 12
     }
 
-    private var footerTrailing: CGFloat {
-        gripCorner == .bottomRight ? gripClearance : 12
-    }
-
     /// Positive x moves right, positive y moves down. The view stays 22×22.
     private var gripOffset: CGSize {
         let inset = PanelResizeGeometry.gripInset
@@ -188,36 +214,34 @@ struct PreviewPanelView: View {
         }
     }
 
-    private var addTaskBar: some View {
-        VStack(spacing: 8) {
-            Button(action: addRoot) {
-                Text("+ Add Task")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(accent.color)
-                    .textSelection(.disabled)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Add Task")
-            .contextMenu {
-                Button("Add Task") { addRoot() }
-                Button("Add Note") { addNote() }
-            }
-            if showsQuote {
-                Text(BrandQuote.text)
-                    .font(.system(size: 10.5, design: .serif).italic())
-                    .foregroundStyle(.primary.opacity(0.4))
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(3)
-                    .lineLimit(3)
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, 12)
-                    .padding(.top, 2)
-            }
+    private var addTaskButton: some View {
+        Button(action: addRoot) {
+            Text("+ Add Task")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(accent.color)
+                .textSelection(.disabled)
+                .frame(maxWidth: .infinity, minHeight: LayoutMetrics.controlHit, alignment: .leading)
+                .contentShape(Rectangle())
         }
-        .padding(.leading, footerLeading)
-        .padding(.trailing, footerTrailing)
-        .padding(.bottom, 12)
+        .buttonStyle(.plain)
+        .accessibilityLabel("Add Task")
+        .contextMenu {
+            Button("Add Task") { addRoot() }
+            Button("Add Note") { addNote() }
+        }
+    }
+
+    private var quoteBlock: some View {
+        Text(BrandQuote.text)
+            .font(.system(size: 12, design: .serif).italic())
+            .foregroundStyle(.primary.opacity(0.9))
+            .shadow(color: .black.opacity(0.55), radius: 1.5, y: 0)
+            .shadow(color: .white.opacity(0.5), radius: 3, y: 0)
+            .multilineTextAlignment(.center)
+            .lineSpacing(3)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity)
+            .layoutPriority(1)
     }
 
     private var memoBody: some View {
@@ -248,10 +272,11 @@ struct PreviewPanelView: View {
         HStack(alignment: .center, spacing: 6) {
             Button(action: state.goToPreviousDay) {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(.system(size: 12, weight: .semibold))
+                    .frame(width: LayoutMetrics.controlHit, height: LayoutMetrics.categoryHitHeight)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .frame(width: 28, height: LayoutMetrics.categoryHitHeight)
             .accessibilityLabel("Previous day")
 
             Button {
@@ -307,10 +332,11 @@ struct PreviewPanelView: View {
 
             Button(action: state.goToNextDay) {
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(.system(size: 12, weight: .semibold))
+                    .frame(width: LayoutMetrics.controlHit, height: LayoutMetrics.categoryHitHeight)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .frame(width: 28, height: LayoutMetrics.categoryHitHeight)
             .accessibilityLabel("Next day")
 
             CategoryPickerButton(
@@ -342,9 +368,10 @@ struct PreviewPanelView: View {
                     state.toggleTaskExpanded(item.id)
                 } label: {
                     Image(systemName: state.isTaskExpanded(item.id) ? "chevron.down" : "chevron.right")
-                        .font(.system(size: 9, weight: .bold))
+                        .font(.system(size: 10, weight: .bold))
                         .foregroundStyle(.secondary)
-                        .frame(width: 16, height: 16)
+                        .frame(width: LayoutMetrics.controlHit, height: LayoutMetrics.controlHit)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(state.isTaskExpanded(item.id) ? "Collapse subtasks" : "Expand subtasks")
@@ -365,6 +392,8 @@ struct PreviewPanelView: View {
                                     .font(.system(size: 11, weight: .medium))
                                     .foregroundStyle(accent.color)
                                     .textSelection(.disabled)
+                                    .frame(minHeight: LayoutMetrics.controlHit, alignment: .leading)
+                                    .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
                             .padding(.leading, LayoutMetrics.subtaskIndent)
@@ -400,9 +429,10 @@ struct PreviewPanelView: View {
                 if item.type == .task {
                     Button(action: { state.toggleCompleted(item) }) {
                         Image(systemName: item.isCompleted ? "checkmark.square.fill" : "square")
-                            .font(.system(size: isSubtask ? 12 : 13))
+                            .font(.system(size: isSubtask ? 13 : 14))
                             .foregroundStyle(item.isCompleted ? accent.color : .secondary)
-                            .frame(width: 20, height: 20)
+                            .frame(width: LayoutMetrics.controlHit, height: LayoutMetrics.controlHit)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(item.isCompleted ? "Mark incomplete" : "Mark complete")
@@ -421,7 +451,7 @@ struct PreviewPanelView: View {
                     strikethrough: item.isCompleted,
                     onClick: { edit(item) }
                 )
-                .frame(maxWidth: .infinity, minHeight: 22, alignment: .leading)
+                .frame(maxWidth: .infinity, minHeight: LayoutMetrics.controlHit, alignment: .leading)
                 .opacity(item.isCompleted ? 0.55 : 1)
 
                 if !isSubtask, state.categoryFilter == .all, let badge = DailyView.categoryBadgeName(for: item, in: state.categories) {
@@ -533,9 +563,39 @@ struct PreviewPanelView: View {
     }
 }
 
-private struct PanelHeightKey: PreferenceKey {
-    static let defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
+/// macOS scroll views paint an opaque plate that covers the corner mark.
+private struct ClearScrollPlate: NSViewRepresentable {
+    func makeNSView(context: Context) -> ClearScrollPlateView {
+        ClearScrollPlateView()
+    }
+
+    func updateNSView(_ view: ClearScrollPlateView, context: Context) {
+        view.clearEnclosingScrollView()
     }
 }
+
+private final class ClearScrollPlateView: NSView {
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        clearEnclosingScrollView()
+    }
+
+    override func layout() {
+        super.layout()
+        clearEnclosingScrollView()
+    }
+
+    func clearEnclosingScrollView() {
+        var current: NSView? = self
+        while let next = current?.superview {
+            if let scroll = next as? NSScrollView {
+                scroll.drawsBackground = false
+                scroll.backgroundColor = .clear
+                scroll.contentView.drawsBackground = false
+                return
+            }
+            current = next
+        }
+    }
+}
+

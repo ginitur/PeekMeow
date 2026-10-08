@@ -1,7 +1,8 @@
 import AppKit
 import PeekMeowCore
 
-/// Optional corner mark. A missing file draws nothing and must not trap.
+/// Optional corner file used by the smoke check. The panel draws PeekMeowAtmosphere.png.
+/// A missing file must not trap.
 @MainActor
 enum AtmosphereArtwork {
     static let image: NSImage? = load()

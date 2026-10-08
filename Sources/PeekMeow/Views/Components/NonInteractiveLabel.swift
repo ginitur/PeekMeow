@@ -12,7 +12,15 @@ struct NonInteractiveLabel: NSViewRepresentable {
     var onClick: (() -> Void)?
 
     func makeNSView(context: Context) -> LabelField {
-        let field = LabelField(labelWithString: text)
+        let field = LabelField(frame: .zero)
+        let cell = CenteredLabelCell(textCell: text)
+        cell.font = font
+        cell.lineBreakMode = .byTruncatingTail
+        cell.usesSingleLineMode = true
+        cell.isEditable = false
+        cell.isSelectable = false
+        field.cell = cell
+        field.stringValue = text
         field.maximumNumberOfLines = 1
         field.lineBreakMode = .byTruncatingTail
         field.drawsBackground = false
@@ -21,7 +29,7 @@ struct NonInteractiveLabel: NSViewRepresentable {
         field.isEditable = false
         field.isSelectable = false
         field.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        field.setContentHuggingPriority(.required, for: .vertical)
+        field.setContentHuggingPriority(.defaultLow, for: .vertical)
         return field
     }
 
@@ -81,6 +89,18 @@ final class LabelField: NSTextField {
         let local = convert(event.locationInWindow, from: nil)
         guard bounds.contains(local) else { return }
         onClick?()
+    }
+}
+
+/// Keeps a one-line title centered when the row is taller than the glyphs.
+final class CenteredLabelCell: NSTextFieldCell {
+    override func drawingRect(forBounds rect: NSRect) -> NSRect {
+        var titleRect = super.drawingRect(forBounds: rect)
+        let textHeight = (font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)).boundingRectForFont.height
+        guard titleRect.height > textHeight else { return titleRect }
+        titleRect.origin.y += (titleRect.height - textHeight) / 2
+        titleRect.size.height = textHeight
+        return titleRect
     }
 }
 
