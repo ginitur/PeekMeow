@@ -1,3 +1,4 @@
+import AppKit
 import CoreGraphics
 import Foundation
 import Observation
@@ -10,6 +11,8 @@ final class AppState {
     var categories: [PeekMeowCore.Category]
     var items: [MemoItem]
     var selectedDate: Date = DailyView.startOfDay(Date())
+    /// The history page lists every earlier day's tasks on one page.
+    var showsHistory = false
     var categoryFilter: CategoryFilter = .all
     var showDatePicker = false
     var editingItemID: UUID?
@@ -23,6 +26,9 @@ final class AppState {
     var panelHeight: CGFloat = PanelSizeMetrics.defaultHeight
 
     private let store: MemoStore?
+    /// True while the panel is showing the real current day, including across midnight.
+    private var followsToday = true
+    private var dayObservers: [any NSObjectProtocol] = []
 
     var activeCategories: [PeekMeowCore.Category] {
         categories.filter { !$0.isArchived }.sorted { $0.sortOrder < $1.sortOrder }
@@ -50,8 +56,16 @@ final class AppState {
     }
 
     var pastUnfinishedItems: [MemoItem] {
-        guard isViewingToday else { return [] }
+        guard isViewingToday, !showsHistory else { return [] }
         return DailyView.pastUnfinishedRoots(in: items, before: selectedDate, categoryId: filteredCategoryID)
+    }
+
+    var historyDays: [DailyView.HistoryDay] {
+        DailyView.historyDays(
+            in: items,
+            before: DailyView.startOfDay(Date()),
+            categoryId: filteredCategoryID
+        )
     }
 
     var isEditing: Bool {
@@ -82,6 +96,14 @@ final class AppState {
         items = []
         selectedDate = DailyView.startOfDay(Date())
         reloadFromStore()
+        observeDayChanges()
+    }
+
+    isolated deinit {
+        for observer in dayObservers {
+            NotificationCenter.default.removeObserver(observer)
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
+        }
     }
 
     func categoryForItem(_ item: MemoItem) -> PeekMeowCore.Category? {
@@ -159,13 +181,13 @@ final class AppState {
                 } else if composingType == .note {
                     try store.memos.createNote(
                         title: text,
-                        scheduledDate: selectedDate,
+                        scheduledDate: dayForNewRootItem(),
                         categoryId: targetCategoryID(for: nil)
                     )
                 } else {
                     try store.memos.createTask(
                         title: text,
-                        scheduledDate: selectedDate,
+                        scheduledDate: dayForNewRootItem(),
                         categoryId: targetCategoryID(for: nil)
                     )
                 }
@@ -202,6 +224,28 @@ final class AppState {
         composingType = .task
         editingItemID = nil
         draftText = ""
+        catchUpWithToday()
+    }
+
+    private func observeDayChanges() {
+        let catchUp: @Sendable (Notification) -> Void = { [weak self] _ in
+            Task { @MainActor in
+                self?.catchUpWithToday()
+            }
+        }
+        for name in [Notification.Name.NSCalendarDayChanged, .NSSystemClockDidChange, .NSSystemTimeZoneDidChange] {
+            dayObservers.append(
+                NotificationCenter.default.addObserver(forName: name, object: nil, queue: nil, using: catchUp)
+            )
+        }
+        dayObservers.append(
+            NSWorkspace.shared.notificationCenter.addObserver(
+                forName: NSWorkspace.didWakeNotification,
+                object: nil,
+                queue: nil,
+                using: catchUp
+            )
+        )
     }
 
     func toggleCompleted(_ item: MemoItem) {
@@ -235,8 +279,24 @@ final class AppState {
     }
 
     func selectDate(_ date: Date) {
-        selectedDate = DailyView.startOfDay(date)
+        let day = DailyView.startOfDay(date)
+        followsToday = DailyView.isViewingToday(day)
+        guard !DailyView.isSameDay(selectedDate, day) else { return }
+        selectedDate = day
+        showDatePicker = false
         reloadFromStore()
+    }
+
+    /// New tasks use the real current day when the panel is following today.
+    private func dayForNewRootItem() -> Date {
+        DailyView.followedDay(selected: selectedDate, followsToday: followsToday, now: Date())
+    }
+
+    /// Moves a today-panel onto the real current day. A day opened on purpose stays put.
+    /// An open edit of an existing row waits until that edit ends, so the row does not vanish.
+    func catchUpWithToday() {
+        guard editingItemID == nil, composingParentID == nil else { return }
+        selectDate(DailyView.followedDay(selected: selectedDate, followsToday: followsToday, now: Date()))
     }
 
     func goToPreviousDay() {
@@ -248,7 +308,29 @@ final class AppState {
     }
 
     func goToToday() {
-        selectDate(Date())
+        openDay(Date())
+    }
+
+    func showTodayPage() {
+        guard showsHistory || !DailyView.isViewingToday(selectedDate) else { return }
+        openDay(Date())
+    }
+
+    func showHistoryPage() {
+        guard !showsHistory else { return }
+        if isEditing { cancelEdit() }
+        showsHistory = true
+        reloadFromStore()
+    }
+
+    /// Leaves the history page and shows `date`, even when that day is already selected.
+    func openDay(_ date: Date) {
+        if isEditing { cancelEdit() }
+        showsHistory = false
+        selectedDate = DailyView.startOfDay(date)
+        followsToday = DailyView.isViewingToday(selectedDate)
+        showDatePicker = false
+        reloadFromStore()
     }
 
     func addCategory(name: String = "New Category") {
@@ -348,17 +430,20 @@ final class AppState {
     }
 
     /// Loads the selected day, and — on Today only — unfinished root tasks from earlier days.
+    /// The history page loads every earlier root task instead.
     /// A failed read leaves the previous UI state in place.
     private func reloadFromStore() {
         guard let store else { return }
         do {
             let storedCategories = try store.categories.fetchCategories()
-            let roots = try store.memos.fetchItems(for: selectedDate)
+            let roots = try showsHistory
+                ? historyRoots(in: store)
+                : store.memos.fetchItems(for: selectedDate)
             var loaded = roots
             for root in roots {
                 loaded.append(contentsOf: try store.memos.fetchChildren(parentId: root.id))
             }
-            if DailyView.isViewingToday(selectedDate) {
+            if !showsHistory, DailyView.isViewingToday(selectedDate) {
                 let past = try store.memos.fetchPastUnfinished(before: selectedDate)
                 for root in past where !loaded.contains(where: { $0.id == root.id }) {
                     loaded.append(root)
@@ -370,6 +455,10 @@ final class AppState {
         } catch {
             Self.log(error)
         }
+    }
+
+    private func historyRoots(in store: MemoStore) throws -> [MemoItem] {
+        try store.memos.fetchHistoryRoots(before: DailyView.startOfDay(Date()))
     }
 
     private static func log(_ error: Error) {

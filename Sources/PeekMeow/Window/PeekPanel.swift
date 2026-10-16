@@ -36,7 +36,8 @@ final class PeekPanel: NSPanel {
         isFloatingPanel = true
         worksWhenModal = true
         acceptsMouseMovedEvents = true
-        sharingType = .none
+        // Read-only so screenshots and screen recordings can include the panel.
+        sharingType = .readOnly
         title = "PeekMeow"
         identifier = NSUserInterfaceItemIdentifier("PeekMeow.PeekPanel")
     }

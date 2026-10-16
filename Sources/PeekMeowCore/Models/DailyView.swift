@@ -18,6 +18,18 @@ public enum DailyView: Sendable {
         isSameDay(selected, now, calendar: calendar)
     }
 
+    /// While the panel is on today, the selected day becomes the real current day.
+    /// A day opened on purpose stays selected across midnight.
+    public static func followedDay(
+        selected: Date,
+        followsToday: Bool,
+        now: Date,
+        calendar: Calendar = .current
+    ) -> Date {
+        guard followsToday else { return startOfDay(selected, calendar: calendar) }
+        return startOfDay(now, calendar: calendar)
+    }
+
     public static func isSameDay(_ a: Date, _ b: Date, calendar: Calendar = .current) -> Bool {
         calendar.isDate(a, inSameDayAs: b)
     }
@@ -53,6 +65,46 @@ public enum DailyView: Sendable {
     public static func matches(_ item: MemoItem, filter categoryId: UUID?) -> Bool {
         guard let categoryId else { return true }
         return item.categoryId == categoryId
+    }
+
+    /// One earlier day on the history page. Newest day first; tasks keep their sort order.
+    public struct HistoryDay: Equatable, Sendable, Identifiable {
+        public var day: Date
+        public var items: [MemoItem]
+
+        public var id: Date { day }
+
+        public init(day: Date, items: [MemoItem]) {
+            self.day = day
+            self.items = items
+        }
+    }
+
+    /// Root tasks scheduled before `day`, completed and unfinished, grouped by day.
+    /// Notes, subtasks, and the current day stay off this page.
+    public static func historyDays(
+        in items: [MemoItem],
+        before day: Date,
+        categoryId: UUID? = nil,
+        calendar: Calendar = .current
+    ) -> [HistoryDay] {
+        let dayStart = startOfDay(day, calendar: calendar)
+        let roots = items.filter { item in
+            item.parentId == nil
+                && item.type == .task
+                && !item.isArchived
+                && matches(item, filter: categoryId)
+                && (item.scheduledDate.map { $0 < dayStart } ?? false)
+        }
+        let grouped = Dictionary(grouping: roots) { item in
+            startOfDay(item.scheduledDate ?? .distantPast, calendar: calendar)
+        }
+        return grouped.keys.sorted(by: >).map { key in
+            HistoryDay(
+                day: key,
+                items: (grouped[key] ?? []).sorted { $0.sortOrder < $1.sortOrder }
+            )
+        }
     }
 
     /// Unfinished root tasks from earlier days. Does not rewrite `scheduledDate`.

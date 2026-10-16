@@ -189,6 +189,9 @@ jobs:
           - Cat app icon
           - All Tasks filter and locale date header
           - Calligraphic 23 in the lower-right corner, with text kept outside it
+          - History page of earlier days' tasks
+          - The open day follows the real calendar day
+          - The expanded panel is included in screenshots
 
           ### Windows
 

@@ -21,7 +21,7 @@ struct PreviewPanelView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     private var showsQuote: Bool {
-        guard !state.isEditing else { return false }
+        guard !state.showsHistory, !state.isEditing else { return false }
         // A zero reading is the view not having been measured yet, not a short panel.
         if state.panelHeight <= 1 { return true }
         return BrandQuote.isVisible(panelHeight: state.panelHeight)
@@ -138,7 +138,7 @@ struct PreviewPanelView: View {
                 placeholder: state.composingType == .note ? "New note" : "New task",
                 isSubtask: false
             )
-        } else if !state.isEditing {
+        } else if !state.isEditing, !state.showsHistory {
             addTaskButton
         }
     }
@@ -246,7 +246,9 @@ struct PreviewPanelView: View {
 
     private var memoBody: some View {
         VStack(alignment: .leading, spacing: 8) {
-            if state.isViewingToday, !state.pastUnfinishedItems.isEmpty {
+            if state.showsHistory {
+                historyBody
+            } else if state.isViewingToday, !state.pastUnfinishedItems.isEmpty {
                 Text("未完成 · \(state.pastUnfinishedItems.count)")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(.secondary)
@@ -262,13 +264,51 @@ struct PreviewPanelView: View {
                     .foregroundStyle(.secondary)
                     .textSelection(.disabled)
             }
-            ForEach(state.visibleDayItems) { item in
-                itemBlock(item)
+            if !state.showsHistory {
+                ForEach(state.visibleDayItems) { item in
+                    itemBlock(item)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var historyBody: some View {
+        if state.historyDays.isEmpty {
+            Text("还没有更早的任务")
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+                .textSelection(.disabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.top, 12)
+        } else {
+            ForEach(state.historyDays) { section in
+                historyDayHeading(section)
+                ForEach(section.items) { item in
+                    itemBlock(item)
+                }
             }
         }
     }
 
     private var header: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(alignment: .center, spacing: 6) {
+                if state.showsHistory {
+                    Text("历史")
+                        .font(.system(size: 13, weight: .semibold))
+                        .textSelection(.disabled)
+                        .frame(maxWidth: .infinity, minHeight: LayoutMetrics.categoryHitHeight, alignment: .leading)
+                } else {
+                    dayNavigator
+                }
+                categoryControl
+            }
+            pageSwitch
+        }
+    }
+
+    private var dayNavigator: some View {
         HStack(alignment: .center, spacing: 6) {
             Button(action: state.goToPreviousDay) {
                 Image(systemName: "chevron.left")
@@ -338,8 +378,12 @@ struct PreviewPanelView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Next day")
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
 
-            CategoryPickerButton(
+    private var categoryControl: some View {
+        CategoryPickerButton(
                 label: state.filterLabel,
                 categories: state.activeCategories,
                 onSelectAll: { state.categoryFilter = .all },
@@ -355,7 +399,61 @@ struct PreviewPanelView: View {
                     HitRegionOverlay(kind: .category)
                 }
             }
+    }
+
+    private var pageSwitch: some View {
+        HStack(spacing: 6) {
+            pageButton("今天", selected: !state.showsHistory) {
+                state.showTodayPage()
+            }
+            pageButton("历史", selected: state.showsHistory) {
+                state.showHistoryPage()
+            }
+            Spacer(minLength: 0)
         }
+    }
+
+    private func pageButton(_ title: String, selected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 12, weight: selected ? .semibold : .medium))
+                .foregroundStyle(selected ? Color.primary : Color.secondary)
+                .textSelection(.disabled)
+                .padding(.horizontal, 10)
+                .frame(minHeight: LayoutMetrics.controlHit)
+                .background {
+                    if selected {
+                        Capsule().fill(Color.primary.opacity(0.08))
+                    }
+                }
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(title)
+    }
+
+    private func historyDayHeading(_ section: DailyView.HistoryDay) -> some View {
+        let done = section.items.filter(\.isCompleted).count
+        let title = DateHeaderText.format(selected: section.day, now: Date())
+        return Button {
+            state.openDay(section.day)
+        } label: {
+            HStack(spacing: 6) {
+                Text(title)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .textSelection(.disabled)
+                Spacer(minLength: 0)
+                Text("\(done)/\(section.items.count)")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.tertiary)
+                    .textSelection(.disabled)
+            }
+            .frame(maxWidth: .infinity, minHeight: LayoutMetrics.controlHit, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Open \(title)")
     }
 
     @ViewBuilder

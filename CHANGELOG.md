@@ -2,7 +2,18 @@
 
 All notable changes to PeekMeow are recorded here.
 
-Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). `0.1.0-rc.4` is the published pre-release. Earlier candidates stay published. `0.1.0-rc.2` failed device acceptance. This is not a stable `0.1.0`.
+Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). `0.1.0-rc.5` is the published pre-release. Earlier candidates stay published. `0.1.0-rc.2` failed device acceptance. This is not a stable `0.1.0`.
+
+## [0.1.0-rc.5] — 2026-10-16
+
+### Added
+
+- macOS History page. Earlier days' root tasks, finished and unfinished, sit on one page, newest day first. Notes stay out. A date heading opens that day. Today stays the daily page.
+
+### Changed
+
+- While the panel is on today, midnight, wake, a clock change, or a timezone change moves it to the real current day. A day opened on purpose stays.
+- The expanded macOS panel is included in screenshots and screen recordings.
 
 ## [0.1.0-rc.4] — 2026-10-08
 

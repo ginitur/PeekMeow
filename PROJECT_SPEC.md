@@ -10,7 +10,7 @@ Core model: **Date, Category, Note, Task, Subtask, Completion.**
 
 Nothing else is part of v0.1: no priority, tags, projects, reminders, recurrence, notifications, calendar sync, kanban, statistics, charts, Markdown, attachments, iCloud, or accounts.
 
-Version: `0.1.0-rc.4` (published pre-release `v0.1.0-rc.4`; not stable `v0.1.0`)  
+Version: `0.1.0-rc.5` (published pre-release `v0.1.0-rc.5`; not stable `v0.1.0`)  
 Bundle identifier: `com.peekmeow.app`  
 Deployment target: macOS 14+
 
@@ -126,6 +126,12 @@ The expanded panel is always a date view. Default `selectedDate` is today.
 
 Historical daily view is derived from current `scheduledDate` + `completedAt`.
 Full activity history / event log is a future enhancement.
+
+macOS has one History page: root tasks scheduled before today, finished and unfinished, newest day first. Notes stay out. Subtasks stay under their parent. A date heading opens that day and leaves History. Today is not mixed into History. The category filter still applies. Add Task and the quotation hide on that page.
+
+While the panel is following today, midnight, wake, a clock change, or a timezone change moves `selectedDate` to the real current day. A day opened on purpose stays. An open edit of an existing row, or the subtask composer, holds the day until the edit ends.
+
+The expanded macOS panel is included in screenshots and screen recordings.
 
 Completed tasks remain in the day’s list (checked + strikethrough). They are not moved to a Completed section.
 

@@ -27,6 +27,21 @@ public struct MemoRepository: Sendable {
         }
     }
 
+    /// Root tasks scheduled before `day`, including completed ones. Notes and subtasks stay out.
+    public func fetchHistoryRoots(before day: Date, calendar: Calendar = .current) throws -> [MemoItem] {
+        let start = DailyView.startOfDay(day, calendar: calendar)
+        return try writer.read { db in
+            try MemoItemRecord
+                .filter(Column("parent_id") == nil)
+                .filter(Column("type") == ItemType.task.rawValue)
+                .filter(Column("is_archived") == false)
+                .filter(Column("scheduled_date") < start)
+                .order(Column("scheduled_date").desc, Column("sort_order").asc)
+                .fetchAll(db)
+                .map { try $0.model() }
+        }
+    }
+
     /// Unfinished root tasks scheduled before `day`. Does not change `scheduledDate`.
     public func fetchPastUnfinished(before day: Date, calendar: Calendar = .current) throws -> [MemoItem] {
         let start = DailyView.startOfDay(day, calendar: calendar)
