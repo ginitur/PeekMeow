@@ -2,9 +2,9 @@
 
 All notable changes to PeekMeow are recorded here.
 
-Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). `0.1.0-rc.5` is the published pre-release. Earlier candidates stay published. `0.1.0-rc.2` failed device acceptance. This is not a stable `0.1.0`.
+Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). `0.1.0-rc.6` is the published pre-release. Earlier candidates stay published. `0.1.0-rc.2` failed device acceptance. The `v0.1.0-rc.5` tag did not publish a download. This is not a stable `0.1.0`.
 
-## [0.1.0-rc.5] — 2026-10-16
+## [0.1.0-rc.6] — 2026-10-16
 
 ### Added
 

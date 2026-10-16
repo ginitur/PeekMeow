@@ -28,7 +28,8 @@ final class AppState {
     private let store: MemoStore?
     /// True while the panel is showing the real current day, including across midnight.
     private var followsToday = true
-    private var dayObservers: [any NSObjectProtocol] = []
+    /// `nonisolated(unsafe)` so a plain `deinit` can unregister. `isolated deinit` fails on the GitHub macOS runner.
+    @ObservationIgnored nonisolated(unsafe) private var dayObservers: [any NSObjectProtocol] = []
 
     var activeCategories: [PeekMeowCore.Category] {
         categories.filter { !$0.isArchived }.sorted { $0.sortOrder < $1.sortOrder }
@@ -99,7 +100,7 @@ final class AppState {
         observeDayChanges()
     }
 
-    isolated deinit {
+    deinit {
         for observer in dayObservers {
             NotificationCenter.default.removeObserver(observer)
             NSWorkspace.shared.notificationCenter.removeObserver(observer)
