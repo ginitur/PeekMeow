@@ -195,6 +195,7 @@ jobs:
           - The expanded panel is included in screenshots
           - Color cat in the menu bar
           - A click on the edge opens the panel and does not pin it; leaving the pointer collapses it
+          - Thin overlay scrollbar, without a solid track
 
           ### Windows
 

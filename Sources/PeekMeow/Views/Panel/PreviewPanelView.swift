@@ -662,6 +662,7 @@ struct PreviewPanelView: View {
 }
 
 /// macOS scroll views paint an opaque plate that covers the corner mark.
+/// With a mouse attached, AppKit also uses a solid scroller track. The panel keeps the overlay knob instead.
 private struct ClearScrollPlate: NSViewRepresentable {
     func makeNSView(context: Context) -> ClearScrollPlateView {
         ClearScrollPlateView()
@@ -690,6 +691,10 @@ private final class ClearScrollPlateView: NSView {
                 scroll.drawsBackground = false
                 scroll.backgroundColor = .clear
                 scroll.contentView.drawsBackground = false
+                if scroll.scrollerStyle != .overlay {
+                    scroll.scrollerStyle = .overlay
+                    scroll.autohidesScrollers = true
+                }
                 return
             }
             current = next

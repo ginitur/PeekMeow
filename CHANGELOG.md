@@ -2,7 +2,13 @@
 
 All notable changes to PeekMeow are recorded here.
 
-Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). `0.1.0-rc.7` is the published pre-release. Earlier candidates stay published. `0.1.0-rc.2` failed device acceptance. The `v0.1.0-rc.5` tag did not publish a download. This is not a stable `0.1.0`.
+Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). `0.1.0-rc.8` is the published pre-release. Earlier candidates stay published. `0.1.0-rc.2` failed device acceptance. The `v0.1.0-rc.5` tag did not publish a download. This is not a stable `0.1.0`.
+
+## [0.1.0-rc.8] — 2026-11-25
+
+### Changed
+
+- The macOS task list uses a thin overlay scrollbar. A connected mouse no longer leaves a solid track beside the tasks.
 
 ## [0.1.0-rc.7] — 2026-11-25
 
