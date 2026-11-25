@@ -29,12 +29,12 @@ Supported edges are Left, Right, and Bottom. Top is not a snap target.
 
 ## Download
 
-Release candidates are published on [GitHub Releases](https://github.com/ginitur/PeekMeow/releases). `v0.1.0-rc.6` is the newest published pre-release. It is not a stable `v0.1.0`. `v0.1.0-rc.1` through `v0.1.0-rc.4` stay on the releases page. `v0.1.0-rc.2` did not pass device acceptance. `v0.1.0-rc.5` is a tag only and has no download.
+Release candidates are published on [GitHub Releases](https://github.com/ginitur/PeekMeow/releases). `v0.1.0-rc.7` is the newest published pre-release. It is not a stable `v0.1.0`. `v0.1.0-rc.1` through `v0.1.0-rc.4`, and `v0.1.0-rc.6`, stay on the releases page. `v0.1.0-rc.2` did not pass device acceptance. `v0.1.0-rc.5` is a tag only and has no download.
 
 | Platform | Asset | Run |
 | --- | --- | --- |
-| macOS 14+ on Apple silicon | `PeekMeow-macOS-0.1.0-rc.6.zip` | Unzip and open `PeekMeow.app` |
-| Windows x64 | `PeekMeow-Windows-x64-0.1.0-rc.6.zip` | Unzip and double-click `PeekMeow.exe` |
+| macOS 14+ on Apple silicon | `PeekMeow-macOS-0.1.0-rc.7.zip` | Unzip and open `PeekMeow.app` |
+| Windows x64 | `PeekMeow-Windows-x64-0.1.0-rc.7.zip` | Unzip and double-click `PeekMeow.exe` |
 
 Check `SHA256SUMS.txt` on the release against the downloaded zip.
 
@@ -46,7 +46,7 @@ This release candidate is not notarized.
 
 If macOS intercepts the app, use the confirmation macOS already provides: Finder → Right Click → Open. Do not turn off system security protections.
 
-The app is an accessory: no Dock icon. Quit from the menu-bar note icon.
+The app is an accessory: no Dock icon. Quit from the menu-bar cat icon.
 
 Opening the `.app` uses the same data as `swift run`:
 

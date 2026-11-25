@@ -31,6 +31,7 @@ jobs:
           test -f "$app/Contents/Resources/AppIcon.icns"
           test -f "$app/Contents/Resources/PeekMeowMark.png"
           test -f "$app/Contents/Resources/PeekMeowAtmosphere.png"
+          test -f "$app/Contents/Resources/PeekMeowMenuBar.png"
           sips -g pixelWidth -g pixelHeight "$app/Contents/Resources/PeekMeowMark.png"
           version="$(tr -d '[:space:]' < VERSION)"
           tag="${GITHUB_REF_NAME#v}"
@@ -192,6 +193,8 @@ jobs:
           - History page of earlier days' tasks
           - The open day follows the real calendar day
           - The expanded panel is included in screenshots
+          - Color cat in the menu bar
+          - A click on the edge opens the panel and does not pin it; leaving the pointer collapses it
 
           ### Windows
 

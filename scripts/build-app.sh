@@ -31,6 +31,7 @@ cp "$ROOT/Sources/PeekMeow/Resources/Info.plist" "$PLIST"
 ICON="$ROOT/Brand/AppIcon.icns"
 MARK="$ROOT/Brand/PeekMeow-Mark.png"
 ATMOSPHERE="$ROOT/Brand/PeekMeow-Atmosphere.png"
+MENU="$ROOT/Brand/PeekMeow-MenuBar.png"
 if [[ ! -f "$ICON" ]]; then
   echo "error: missing $ICON — run scripts/make-icons.py" >&2
   exit 1
@@ -43,9 +44,14 @@ if [[ ! -f "$ATMOSPHERE" ]]; then
   echo "error: missing $ATMOSPHERE" >&2
   exit 1
 fi
+if [[ ! -f "$MENU" ]]; then
+  echo "error: missing $MENU" >&2
+  exit 1
+fi
 cp "$ICON" "$APP/Contents/Resources/AppIcon.icns"
 cp "$MARK" "$APP/Contents/Resources/PeekMeowMark.png"
 cp "$ATMOSPHERE" "$APP/Contents/Resources/PeekMeowAtmosphere.png"
+cp "$MENU" "$APP/Contents/Resources/PeekMeowMenuBar.png"
 set_plist() {
   local key="$1"
   local value="$2"

@@ -30,14 +30,47 @@ final class StatusItemController {
         self.onOpenSettings = onOpenSettings
         item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = item.button {
-            button.image = NSImage(
-                systemSymbolName: "note.text",
-                accessibilityDescription: "PeekMeow"
-            )
-            button.image?.isTemplate = true
+            button.image = Self.menuBarImage()
+            button.image?.isTemplate = false
             button.toolTip = "PeekMeow"
         }
         item.menu = makeMenu()
+    }
+
+    /// The cat logo at menu-bar size. A missing file falls back to the note symbol.
+    private static func menuBarImage() -> NSImage {
+        for url in menuBarURLs() {
+            guard let image = NSImage(contentsOf: url),
+                  image.size.width > 0,
+                  image.size.height > 0
+            else { continue }
+            let height: CGFloat = 18
+            let width = (height * image.size.width / image.size.height).rounded()
+            image.size = NSSize(width: width, height: height)
+            image.isTemplate = false
+            return image
+        }
+        let symbol = NSImage(systemSymbolName: "note.text", accessibilityDescription: "PeekMeow") ?? NSImage()
+        symbol.isTemplate = true
+        return symbol
+    }
+
+    private static func menuBarURLs() -> [URL] {
+        var urls: [URL] = []
+        if let bundled = Bundle.main.url(forResource: "PeekMeowMenuBar", withExtension: "png") {
+            urls.append(bundled)
+        }
+        let fileManager = FileManager.default
+        urls.append(URL(fileURLWithPath: fileManager.currentDirectoryPath).appendingPathComponent("Brand/PeekMeow-MenuBar.png"))
+        if let executable = Bundle.main.executableURL {
+            var directory = executable.deletingLastPathComponent()
+            for _ in 0..<8 {
+                urls.append(directory.appendingPathComponent("Brand/PeekMeow-MenuBar.png"))
+                urls.append(directory.appendingPathComponent("PeekMeowMenuBar.png"))
+                directory.deleteLastPathComponent()
+            }
+        }
+        return urls
     }
 
     private func makeMenu() -> NSMenu {

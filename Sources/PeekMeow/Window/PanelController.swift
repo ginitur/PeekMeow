@@ -20,6 +20,8 @@ final class PanelController {
     private let preferences: PreferencesModel
     private var currentExpansion: ExpansionLayout?
     private var outsideMoveMonitor: Any?
+    /// Sampled while expanded. A global `mouseMoved` monitor is silent without Accessibility, so a missed `mouseExited` used to leave the panel open until Hide.
+    nonisolated(unsafe) private var collapseWatch: Timer?
     private var resizeMonitor: Any?
     private var resizeStartMouse: CGPoint?
     private var resizeStartSize: PanelContentSize?
@@ -84,6 +86,10 @@ final class PanelController {
         observeScreenChanges()
     }
 
+    deinit {
+        collapseWatch?.invalidate()
+    }
+
     func showRestoredOrDefault() {
         applyPreferences()
         guard let screen = ScreenManager.mainSnapshot() else {
@@ -101,7 +107,11 @@ final class PanelController {
 
     func hide() {
         endPanelResize()
+        suppressAnimatedCollapse = true
+        hover.forceCollapse()
+        suppressAnimatedCollapse = false
         stopOutsideMonitor()
+        stopCollapseWatch()
         panel.orderOut(nil)
     }
 
@@ -227,6 +237,7 @@ final class PanelController {
         if hover.engine.isPinned || hover.engine.phase == .collapsed {
             stopOutsideMonitor()
         }
+        updateCollapseWatch()
         publishInteractionLog(at: NSEvent.mouseLocation)
     }
 
@@ -269,6 +280,7 @@ final class PanelController {
         DispatchQueue.main.asyncAfter(deadline: .now() + LayoutMetrics.contentFadeOutDuration) { [weak self] in
             guard let self, self.motionGeneration == generation else { return }
             self.shellExpanded = false
+            self.updateCollapseWatch()
             let duration = self.preferences.movementDuration(LayoutMetrics.collapseDuration)
             self.syncChrome(
                 animated: true,
@@ -532,6 +544,34 @@ final class PanelController {
             exitKeyMode()
         }
         evaluatePointer()
+    }
+
+    private static let collapseWatchInterval: TimeInterval = 0.1
+
+    private func updateCollapseWatch() {
+        let phase = hover.engine.phase
+        let shouldWatch = !hover.isDragging && (phase == .hovering || phase == .expanded || phase == .editing)
+        if shouldWatch {
+            startCollapseWatch()
+        } else {
+            stopCollapseWatch()
+        }
+    }
+
+    private func startCollapseWatch() {
+        guard collapseWatch == nil else { return }
+        let timer = Timer(timeInterval: Self.collapseWatchInterval, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.evaluatePointer()
+            }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        collapseWatch = timer
+    }
+
+    private func stopCollapseWatch() {
+        collapseWatch?.invalidate()
+        collapseWatch = nil
     }
 
     private func startOutsideMonitor() {

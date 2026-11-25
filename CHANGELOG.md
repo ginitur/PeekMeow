@@ -2,7 +2,17 @@
 
 All notable changes to PeekMeow are recorded here.
 
-Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). `0.1.0-rc.6` is the published pre-release. Earlier candidates stay published. `0.1.0-rc.2` failed device acceptance. The `v0.1.0-rc.5` tag did not publish a download. This is not a stable `0.1.0`.
+Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). `0.1.0-rc.7` is the published pre-release. Earlier candidates stay published. `0.1.0-rc.2` failed device acceptance. The `v0.1.0-rc.5` tag did not publish a download. This is not a stable `0.1.0`.
+
+## [0.1.0-rc.7] — 2026-11-25
+
+### Fixed
+
+- The macOS edge panel collapses after the pointer leaves. A click on the edge opens it and does not pin it.
+
+### Changed
+
+- The macOS menu-bar icon is the color cat logo.
 
 ## [0.1.0-rc.6] — 2026-10-16
 

@@ -6,7 +6,7 @@ enum HoverEngineTests {
         try leaveDuringDelayCancelsOpen()
         try leaveExpandedSchedulesClose()
         try reenteringPanelCancelsClose()
-        try clickPinsAndSecondClickCollapses()
+        try clickOpensWithoutPinning()
         try pinnedIgnoresPointerExit()
         try doubleClickEntersEditingAndAllowsKey()
         try delaysComeFromSettings()
@@ -54,13 +54,18 @@ enum HoverEngineTests {
         try expectEqual(engine.phase, .expanded)
     }
 
-    static func clickPinsAndSecondClickCollapses() throws {
-        var engine = HoverEngine(phase: .expanded)
-        _ = engine.handle(.click)
-        try expectEqual(engine.phase, .pinned)
-        let output = engine.handle(.click)
-        try expectEqual(engine.phase, .collapsed)
-        try expectEqual(output, .collapse)
+    static func clickOpensWithoutPinning() throws {
+        var collapsed = HoverEngine()
+        try expectEqual(collapsed.handle(.click), .expand)
+        try expectEqual(collapsed.phase, .expanded)
+        try expect(!collapsed.isPinned)
+        let exit = collapsed.handle(.pointerExitedRegion)
+        try expectEqual(exit, .scheduleClose(LayoutMetrics.defaultHoverCloseDelay))
+
+        var expanded = HoverEngine(phase: .expanded, pointerInside: true)
+        try expectEqual(expanded.handle(.click), .none)
+        try expectEqual(expanded.phase, .expanded)
+        try expect(!expanded.isPinned)
     }
 
     static func pinnedIgnoresPointerExit() throws {

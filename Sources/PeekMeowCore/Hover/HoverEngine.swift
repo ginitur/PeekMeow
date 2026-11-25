@@ -114,7 +114,9 @@ public struct HoverEngine: Equatable, Sendable {
             return .expand
 
         case (.hovering, .click):
-            phase = .pinned
+            // A click on the edge opens the panel. It must not pin, or leaving the
+            // pointer there keeps the panel out until Hide.
+            phase = .expanded
             return .expand
 
         case (.hovering, .doubleClick):
@@ -138,8 +140,7 @@ public struct HoverEngine: Equatable, Sendable {
             return .collapse
 
         case (.expanded, .click):
-            phase = .pinned
-            return .cancelTimers
+            return .none
 
         case (.expanded, .doubleClick):
             phase = .editing
@@ -168,7 +169,7 @@ public struct HoverEngine: Equatable, Sendable {
             return .none
 
         case (.collapsed, .click):
-            phase = .pinned
+            phase = .expanded
             return .expand
 
         case (.collapsed, .doubleClick):

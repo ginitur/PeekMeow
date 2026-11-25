@@ -11,7 +11,7 @@ final class EdgeHostView: NSView {
     var onPointerExited: (() -> Void)?
     var onPointerMoved: ((CGPoint) -> Void)?
 
-    /// When set, only this rect (view coordinates) starts a drag or a pin click.
+    /// When set, only this rect (view coordinates) starts a drag or an open click.
     var dragHandleRect: CGRect?
 
     private var isDragging = false

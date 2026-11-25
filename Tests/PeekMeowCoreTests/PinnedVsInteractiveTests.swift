@@ -3,21 +3,21 @@ import PeekMeowCore
 
 enum PinnedVsInteractiveTests {
     static func run() throws {
-        try explicitClickPins()
+        try explicitClickDoesNotPin()
         try pinnedIgnoresPointerExit()
         try categoryInteractionDoesNotPin()
         try endingCategoryInteractionIsNotPinned()
         try editAndMenuDoNotPin()
     }
 
-    static func explicitClickPins() throws {
+    static func explicitClickDoesNotPin() throws {
         var engine = HoverEngine(phase: .expanded, pointerInside: true)
         _ = engine.handle(.click)
-        try expect(engine.isPinned)
-        try expectEqual(engine.phase, .pinned)
+        try expect(!engine.isPinned)
+        try expectEqual(engine.phase, .expanded)
         let exit = engine.handle(.pointerExitedRegion)
-        try expectEqual(exit, .none)
-        try expectEqual(engine.phase, .pinned)
+        try expectEqual(exit, .scheduleClose(engine.closeDelay))
+        try expectEqual(engine.phase, .expanded)
     }
 
     static func pinnedIgnoresPointerExit() throws {

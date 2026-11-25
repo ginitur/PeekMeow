@@ -10,7 +10,7 @@ Core model: **Date, Category, Note, Task, Subtask, Completion.**
 
 Nothing else is part of v0.1: no priority, tags, projects, reminders, recurrence, notifications, calendar sync, kanban, statistics, charts, Markdown, attachments, iCloud, or accounts.
 
-Version: `0.1.0-rc.6` (published pre-release `v0.1.0-rc.6`; not stable `v0.1.0`)  
+Version: `0.1.0-rc.7` (published pre-release `v0.1.0-rc.7`; not stable `v0.1.0`)  
 Bundle identifier: `com.peekmeow.app`  
 Deployment target: macOS 14+
 
@@ -96,7 +96,7 @@ Visual thickness and hit thickness are independent constants in `LayoutMetrics`.
 
 Hover is owned by `HoverEngine` (Core) plus an AppKit `HoverController` that feeds pointer enter/exit for the **union** of the edge item and expanded panel (`HoverRegion`, 6 pt padding, 80 ms grace). SwiftUI `onHover` is not the source of truth.
 
-There is no notch sensor window and no notch mouse monitor. The remaining global `mouseMoved` monitor tracks hover enter and exit outside the panel. It is not a notch probe.
+There is no notch sensor window and no notch mouse monitor. The remaining global `mouseMoved` monitor tracks hover enter and exit outside the panel. It is not a notch probe. That monitor does not receive `mouseMoved` without Accessibility, so while the panel is expanded the app also samples `NSEvent.mouseLocation`. A click on the edge opens the panel and does not pin it. Leaving the pointer collapses it. Editing, dragging, resizing, and an open menu or date picker still hold it open. Hide dismisses it.
 
 ## Product model
 
@@ -193,7 +193,7 @@ A note may have a `scheduledDate` and a `categoryId`. It cannot have a parent or
 
 ## Settings
 
-Preferences is a normal macOS window (General, Appearance, Behavior), opened from the menu bar. The menu bar icon stays visible so Settings and Quit cannot be lost.
+Preferences is a normal macOS window (General, Appearance, Behavior), opened from the menu bar. The menu bar icon stays visible so Settings and Quit cannot be lost. It is the cat logo in color, not a template symbol. A missing logo file falls back to the note symbol.
 
 Appearance and behavior live in UserDefaults under `peekmeow.preferences.*`, through `PreferencesStore`. Views do not call `UserDefaults.set` themselves. Nothing in this window is written to SQLite.
 
